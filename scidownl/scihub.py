@@ -16,13 +16,22 @@ STD_ERROR = colored('[ERROR] ', 'red')
 STD_WARNING = colored('[WARNING] ', 'yellow')
 STD_INPUT = colored('[INPUT] ', 'blue')
 
+def doi_to_filename(doi):
+    """Convert doi to filename.
+    """
+    return doi.replace('/', '_').replace('.', '_') + '.pdf'
+
 class SciHub(object):
-    def __init__(self, doi, out='.'):
+    def __init__(self, doi, out='.', filename=None):
         self.doi = doi
         self.out = out
         self.sess = requests.Session()
         self.check_out_path()
         self.read_available_links()
+        if isinstance(filename, str):
+            self.filename = filename
+        else:
+            self.filename = doi_to_filename(self.doi)
 
     def check_out_path(self):
         if not os.path.isdir(self.out):
@@ -88,13 +97,10 @@ class SciHub(object):
             print(STD_INFO + colored('Article title', attrs=['bold']) + " -> \n\t%s" %(pdf['title']))
         else:
             pdf = self.find_pdf_in_html(res.text)
+            pdf["doi"] = self.doi
 
-        self.download_pdf(pdf)
-        # try:
-        #     pdf = self.find_pdf_in_html(res.text)
-        #     self.download_pdf(pdf)
-        # except:
-        #     print(STD_ERROR + "Failed to access the article.")
+        return self.download_pdf(pdf)
+
 
     def find_pdf_in_html(self, html):
         """Find pdf url and title in a scihub html
@@ -167,7 +173,7 @@ class SciHub(object):
             res = self.sess.get(pdf['pdf_url'], stream=True)
             retry_times += 1
         tot_size = int(res.headers['Content-Length']) if 'Content-Length' in res.headers else 0
-        out_file_path = os.path.join(self.out, pdf['title']+'.pdf')
+        out_file_path = os.path.join(self.out, self.filename)
         downl_size = 0
         with open(out_file_path, 'wb') as f:
             for data in res.iter_content(chunk_size=1024, decode_unicode=False):
@@ -180,6 +186,7 @@ class SciHub(object):
                     perc_disp = colored(STD_INFO)
                 print("\r{0}Progress: {1} / {2}".format(perc_disp, downl_size, tot_size), end='')
         print('\n' + STD_INFO + "Done.".ljust(50))
+        return out_file_path
 
     def is_captcha_page(self, res):
         """Check if the result page is a captcha page."""

@@ -13,3 +13,5 @@ dist
 *.pyc
 DEPLOYMENT.md
 playground.*
+*.pdf
+venv/
