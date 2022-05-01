@@ -87,7 +87,7 @@ class SciHub(object):
             self.use_scihub_url(choose_scihub_url_index)
             scihub_paper_url = f"{self.scihub_url}/{str(self.doi)}"
             print(f"Downloading from {scihub_paper_url}")
-            pdf["pdf_url"] = scihub_paper_url
+            # pdf["pdf_url"] = scihub_paper_url
             res = self.sess.get(scihub_paper_url, stream=True)
 
         if self.is_captcha_page(res) or res.headers['Content-Type'] == 'application/pdf':
@@ -100,6 +100,7 @@ class SciHub(object):
         else:
             pdf = self.find_pdf_in_html(res.text)
             pdf["doi"] = self.doi
+            pdf["pdf_url"] = scihub_paper_url
 
         return self.download_pdf(pdf)
 
